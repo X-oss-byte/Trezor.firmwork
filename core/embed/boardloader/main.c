@@ -228,13 +228,13 @@ int main(void) {
   // want the PVD enabled before flash operations too.
   periph_init();
 
-  if (sectrue != flash_configure_option_bytes()) {
-    // display is not initialized so don't call ensure
-    const secbool r =
-        flash_area_erase_bulk(STORAGE_AREAS, STORAGE_AREAS_COUNT, NULL);
-    (void)r;
-    return 2;
-  }
+  //  if (sectrue != flash_configure_option_bytes()) {
+  //    // display is not initialized so don't call ensure
+  //    const secbool r =
+  //        flash_area_erase_bulk(STORAGE_AREAS, STORAGE_AREAS_COUNT, NULL);
+  //    (void)r;
+  //    return 2;
+  //  }
 
 #ifdef STM32F4
   clear_otg_hs_memory();

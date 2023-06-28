@@ -229,9 +229,15 @@ void __attribute__((noreturn)) nlr_jump_fail(void *val) {
 
 void NMI_Handler(void) {
   // Clock Security System triggered NMI
+#ifdef STM32U5
+  if ((RCC->CIFR & RCC_CIFR_CSSF) != 0) {
+    error_shutdown("INTERNAL ERROR", "(CS)");
+  }
+#else
   if ((RCC->CIR & RCC_CIR_CSSF) != 0) {
     error_shutdown("INTERNAL ERROR", "(CS)");
   }
+#endif
 }
 
 void HardFault_Handler(void) { error_shutdown("INTERNAL ERROR", "(HF)"); }
@@ -294,11 +300,18 @@ void SVC_C_Handler(uint32_t *stack) {
 
       __asm__ volatile("msr control, %0" ::"r"(0x0));
       __asm__ volatile("isb");
+
+#ifdef STM32U5
+      _stay_in_bootloader_flag_addr = STAY_IN_BOOTLOADER_FLAG;
+      __disable_irq();
+      HAL_NVIC_SystemReset();
+#else
       // See stack layout in
       // https://developer.arm.com/documentation/ka004005/latest We are changing
       // return address in PC to land into reboot to avoid any bug with ROP and
       // raising privileges.
       stack[6] = (uintptr_t)reboot_to_bootloader;
+#endif
       return;
     case SVC_GET_SYSTICK_VAL: {
       systick_val_copy = SysTick->VAL;

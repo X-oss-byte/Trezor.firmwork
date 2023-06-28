@@ -24,6 +24,7 @@
 #include "display.h"
 #include "flash.h"
 #include "image.h"
+#include "lowlevel.h"
 #include "messages.pb.h"
 #include "random_delays.h"
 #include "secbool.h"
@@ -374,6 +375,12 @@ void real_jump_to_firmware(void) {
   jump_to(FIRMWARE_START + vhdr.hdrlen + IMAGE_HEADER_SIZE);
 }
 
+void jump_to_fw_by_reset(void) {
+  display_fade(display_backlight(-1), 0, 200);
+  __disable_irq();
+  HAL_NVIC_SystemReset();
+}
+
 #ifndef TREZOR_EMULATOR
 int main(void) {
   // grab "stay in bootloader" flag as soon as possible
@@ -384,7 +391,22 @@ int bootloader_main(void) {
 #endif
 
   random_delays_init();
-  // display_init_seq();
+
+#ifdef STM32U5
+  if (sectrue != flash_configure_sec_area_ob()) {
+    //    const secbool r =
+    //            flash_area_erase_bulk(STORAGE_AREAS, STORAGE_AREAS_COUNT,
+    //            NULL);
+    //    (void)r;
+    __disable_irq();
+    HAL_NVIC_SystemReset();
+  }
+
+  // todo read secret
+
+  secret_hide();
+#endif
+
 #ifdef USE_DMA2D
   dma2d_init();
 #endif
@@ -478,7 +500,8 @@ int bootloader_main(void) {
 
   unit_variant_init();
 
-#if PRODUCTION
+#if PRODUCTION && !defined STM32U5
+  // for STM32U5, this check is moved to boardloader
   check_bootloader_version();
 #endif
 
@@ -586,7 +609,9 @@ int bootloader_main(void) {
             screen = SCREEN_INTRO;
           }
           if (ui_result == 0x11223344) {  // reboot
+#ifndef STM32U5
             ui_screen_boot_empty(true);
+#endif
             continue_to_firmware = firmware_present;
             continue_to_firmware_backup = firmware_present_backup;
           }
@@ -643,7 +668,11 @@ int bootloader_main(void) {
                  (continue_to_firmware == continue_to_firmware_backup),
              NULL);
       if (sectrue == continue_to_firmware) {
+#ifdef STM32U5
+        firmware_jump_fn = jump_to_fw_by_reset;
+#else
         firmware_jump_fn = real_jump_to_firmware;
+#endif
         break;
       }
     }
@@ -651,7 +680,7 @@ int bootloader_main(void) {
 
   ensure(dont_optimize_out_true * (firmware_present == firmware_present_backup),
          NULL);
-  if (sectrue == firmware_present) {
+  if (sectrue == firmware_present && firmware_jump_fn != jump_to_fw_by_reset) {
     firmware_jump_fn = real_jump_to_firmware;
   }
 

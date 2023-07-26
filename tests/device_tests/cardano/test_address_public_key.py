@@ -95,7 +95,9 @@ def test_cardano_get_public_key(client: Client, parameters, result):
     derivation_type = CardanoDerivationType.__members__[
         parameters.get("derivation_type", "ICARUS_TREZOR")
     ]
-    key = get_public_key(client, parse_path(parameters["path"]), derivation_type)
+    key = get_public_key(
+        client, parse_path(parameters["path"]), derivation_type, show_display=True
+    )
 
     assert key.node.public_key.hex() == result["public_key"]
     assert key.node.chain_code.hex() == result["chain_code"]

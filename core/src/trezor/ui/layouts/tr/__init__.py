@@ -452,31 +452,10 @@ async def confirm_homescreen(
     )
 
 
-def _show_xpub(xpub: str, title: str, cancel: str | None) -> ui.Layout:
-    return RustLayout(
-        trezorui2.confirm_blob(
-            title=title.upper(),
-            data=xpub,
-            verb_cancel=cancel,
-            description=None,
-            extra=None,
-        )
-    )
-
-
-async def show_xpub(xpub: str, title: str) -> None:
-    await raise_if_not_confirmed(
-        interact(
-            _show_xpub(xpub, title, None),
-            "show_xpub",
-            ButtonRequestType.PublicKey,
-        )
-    )
-
-
 async def show_address(
     address: str,
     *,
+    title: str | None = None,
     address_qr: str | None = None,
     case_sensitive: bool = True,
     path: str | None = None,
@@ -484,6 +463,9 @@ async def show_address(
     network: str | None = None,
     multisig_index: int | None = None,
     xpubs: Sequence[str] = (),
+    mismatch: str = "ADDRESS MISMATCH?",
+    br_type: str = "show_address",
+    br_code: ButtonRequestType = ButtonRequestType.Address,
 ) -> None:
     send_button_request = True
     # Will be a marquee in case of multisig
@@ -504,8 +486,8 @@ async def show_address(
         if send_button_request:
             send_button_request = False
             await button_request(
-                "show_address",
-                ButtonRequestType.Address,
+                br_type,
+                br_code,
                 pages=layout.page_count(),
             )
         result = await ctx_wait(layout)
@@ -526,8 +508,10 @@ async def show_address(
             result = await ctx_wait(
                 RustLayout(
                     trezorui2.show_address_details(
+                        title="",  # unused on this model
                         address=address if address_qr is None else address_qr,
                         case_sensitive=case_sensitive,
+                        subtitle="",  # unused on this model
                         account=account,
                         path=path,
                         xpubs=[(xpub_title(i), xpub) for i, xpub in enumerate(xpubs)],
@@ -539,14 +523,24 @@ async def show_address(
 
         # User pressed left cancel button, show mismatch dialogue.
         else:
-            result = await ctx_wait(RustLayout(trezorui2.show_mismatch()))
+            result = await ctx_wait(
+                RustLayout(trezorui2.show_mismatch(title=mismatch.upper()))
+            )
             assert result in (CONFIRMED, CANCELLED)
             # Right button aborts action, left goes back to showing address.
             if result is CONFIRMED:
                 raise ActionCancelled
 
 
-def show_pubkey(pubkey: str, title: str = "Confirm public key") -> Awaitable[None]:
+def show_pubkey(
+    pubkey: str,
+    title: str = "Confirm public key",
+    *,
+    account: str | None = None,
+    path: str | None = None,
+    mismatch_title: str = "Key mismatch?",
+    br_type="show_pubkey",
+) -> Awaitable[None]:
     return confirm_blob(
         "show_pubkey",
         title.upper(),

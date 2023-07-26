@@ -730,6 +730,8 @@ extern "C" fn new_confirm_reset_device(n_args: usize, args: *const Obj, kwargs: 
 
 extern "C" fn new_show_address_details(n_args: usize, args: *const Obj, kwargs: *mut Map) -> Obj {
     let block = move |_args: &[Obj], kwargs: &Map| {
+        let title: StrBuffer = kwargs.get(Qstr::MP_QSTR_title)?.try_into()?;
+        let subtitle: StrBuffer = kwargs.get(Qstr::MP_QSTR_subtitle)?.try_into()?;
         let address: StrBuffer = kwargs.get(Qstr::MP_QSTR_address)?.try_into()?;
         let case_sensitive: bool = kwargs.get(Qstr::MP_QSTR_case_sensitive)?.try_into()?;
         let account: Option<StrBuffer> = kwargs.get(Qstr::MP_QSTR_account)?.try_into_option()?;
@@ -737,7 +739,7 @@ extern "C" fn new_show_address_details(n_args: usize, args: *const Obj, kwargs: 
 
         let xpubs: Obj = kwargs.get(Qstr::MP_QSTR_xpubs)?;
 
-        let mut ad = AddressDetails::new(address, case_sensitive, account, path)?;
+        let mut ad = AddressDetails::new(title, address, case_sensitive, subtitle, account, path)?;
 
         for i in IterBuf::new().try_iterate(xpubs)? {
             let [xtitle, text]: [StrBuffer; 2] = iter_into_array(i)?;
@@ -1053,9 +1055,9 @@ extern "C" fn new_show_info(n_args: usize, args: *const Obj, kwargs: *mut Map) -
     unsafe { util::try_with_args_and_kwargs(n_args, args, kwargs, block) }
 }
 
-extern "C" fn new_show_mismatch() -> Obj {
-    let block = move || {
-        let title: StrBuffer = "Address mismatch?".into();
+extern "C" fn new_show_mismatch(n_args: usize, args: *const Obj, kwargs: *mut Map) -> Obj {
+    let block = move |_args: &[Obj], kwargs: &Map| {
+        let title: StrBuffer = kwargs.get(Qstr::MP_QSTR_title)?.try_into()?;
         let description: StrBuffer = "Please contact Trezor support at".into();
         let url: StrBuffer = "trezor.io/support".into();
         let button = "QUIT";
@@ -1083,7 +1085,7 @@ extern "C" fn new_show_mismatch() -> Obj {
 
         Ok(obj.into())
     };
-    unsafe { util::try_or_raise(block) }
+    unsafe { util::try_with_args_and_kwargs(n_args, args, kwargs, block) }
 }
 
 extern "C" fn new_show_simple(n_args: usize, args: *const Obj, kwargs: *mut Map) -> Obj {
@@ -1682,8 +1684,10 @@ pub static mp_module_trezorui2: Module = obj_module! {
 
     /// def show_address_details(
     ///     *,
+    ///     title: str,
     ///     address: str,
     ///     case_sensitive: bool,
+    ///     subtitle: str,
     ///     account: str | None,
     ///     path: str | None,
     ///     xpubs: list[tuple[str, str]],
@@ -1802,9 +1806,9 @@ pub static mp_module_trezorui2: Module = obj_module! {
     ///     """Info modal. No buttons shown when `button` is empty string."""
     Qstr::MP_QSTR_show_info => obj_fn_kw!(0, new_show_info).as_obj(),
 
-    /// def show_mismatch() -> object:
+    /// def show_mismatch(*, title: str) -> object:
     ///     """Warning modal, receiving address mismatch."""
-    Qstr::MP_QSTR_show_mismatch => obj_fn_0!(new_show_mismatch).as_obj(),
+    Qstr::MP_QSTR_show_mismatch => obj_fn_kw!(0, new_show_mismatch).as_obj(),
 
     /// def show_simple(
     ///     *,

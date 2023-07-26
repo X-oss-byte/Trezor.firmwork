@@ -381,6 +381,32 @@ class InputFlowShowMultisigXPUBs(InputFlowBase):
         self.debug.press_middle()
 
 
+class InputFlowShowXpubQRCode(InputFlowBase):
+    def __init__(self, client: Client):
+        super().__init__(client)
+
+    def input_flow_tt(self) -> GeneratorType:
+        yield
+        self.debug.click(buttons.CORNER_BUTTON, wait=True)
+        # synchronize; TODO get rid of this once we have single-global-layout
+        self.debug.synchronize_at("HorizontalPage")
+
+        self.debug.swipe_left(wait=True)
+        self.debug.swipe_right(wait=True)
+        self.debug.swipe_left(wait=True)
+        self.debug.click(buttons.CORNER_BUTTON, wait=True)
+        self.debug.press_no(wait=True)
+        self.debug.press_no(wait=True)
+        self.debug.press_yes()
+
+    def input_flow_tr(self) -> GeneratorType:
+        br = yield  # paginated data
+        # Confirm - no QR on R
+        for _ in range(br.pages):
+            self.debug.wait_layout()
+            self.debug.press_right()
+
+
 class InputFlowPaymentRequestDetails(InputFlowBase):
     def __init__(self, client: Client, outputs: list[messages.TxOutputType]):
         super().__init__(client)

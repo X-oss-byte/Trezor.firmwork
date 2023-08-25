@@ -38,7 +38,7 @@ async def get_public_key(
         from apps.common.paths import address_n_to_str
 
         path = address_n_to_str(address_n)
-        await show_pubkey(key.xpub, "Confirm public key", path=path)
+        await show_pubkey(key.xpub, "Public key", path=path)
     return key
 
 

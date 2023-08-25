@@ -413,9 +413,9 @@ async def show_address(
             if multisig_index is not None
             else "RECEIVE ADDRESS"
         )
-        subtitle = "RECEIVING TO"
+        details_title = "RECEIVING TO"
     else:
-        subtitle = title
+        details_title = title
     while True:
         layout = RustLayout(
             trezorui2.confirm_address(
@@ -449,10 +449,10 @@ async def show_address(
             result = await ctx_wait(
                 RustLayout(
                     trezorui2.show_address_details(
-                        title=title,
+                        qr_title=title,
                         address=address if address_qr is None else address_qr,
                         case_sensitive=case_sensitive,
-                        subtitle=subtitle,
+                        details_title=details_title,
                         account=account,
                         path=path,
                         xpubs=[(xpub_title(i), xpub) for i, xpub in enumerate(xpubs)],
@@ -473,7 +473,7 @@ async def show_address(
 
 def show_pubkey(
     pubkey: str,
-    title: str = "Confirm public key",
+    title: str = "Public key",
     *,
     account: str | None = None,
     path: str | None = None,

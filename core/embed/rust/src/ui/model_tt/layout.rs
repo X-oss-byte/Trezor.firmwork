@@ -730,8 +730,8 @@ extern "C" fn new_confirm_reset_device(n_args: usize, args: *const Obj, kwargs: 
 
 extern "C" fn new_show_address_details(n_args: usize, args: *const Obj, kwargs: *mut Map) -> Obj {
     let block = move |_args: &[Obj], kwargs: &Map| {
-        let title: StrBuffer = kwargs.get(Qstr::MP_QSTR_title)?.try_into()?;
-        let subtitle: StrBuffer = kwargs.get(Qstr::MP_QSTR_subtitle)?.try_into()?;
+        let qr_title: StrBuffer = kwargs.get(Qstr::MP_QSTR_qr_title)?.try_into()?;
+        let details_title: StrBuffer = kwargs.get(Qstr::MP_QSTR_details_title)?.try_into()?;
         let address: StrBuffer = kwargs.get(Qstr::MP_QSTR_address)?.try_into()?;
         let case_sensitive: bool = kwargs.get(Qstr::MP_QSTR_case_sensitive)?.try_into()?;
         let account: Option<StrBuffer> = kwargs.get(Qstr::MP_QSTR_account)?.try_into_option()?;
@@ -739,7 +739,14 @@ extern "C" fn new_show_address_details(n_args: usize, args: *const Obj, kwargs: 
 
         let xpubs: Obj = kwargs.get(Qstr::MP_QSTR_xpubs)?;
 
-        let mut ad = AddressDetails::new(title, address, case_sensitive, subtitle, account, path)?;
+        let mut ad = AddressDetails::new(
+            qr_title,
+            address,
+            case_sensitive,
+            details_title,
+            account,
+            path,
+        )?;
 
         for i in IterBuf::new().try_iterate(xpubs)? {
             let [xtitle, text]: [StrBuffer; 2] = iter_into_array(i)?;
@@ -1079,7 +1086,14 @@ extern "C" fn new_show_mismatch(n_args: usize, args: *const Obj, kwargs: *mut Ma
                     true,
                 ),
             )
-            .with_description(description)
+            .with_paragraph(
+                Paragraph::new(&theme::TEXT_NORMAL, description)
+                    .centered()
+                    .with_bottom_padding(
+                        theme::TEXT_NORMAL.text_font.text_height()
+                            - theme::TEXT_DEMIBOLD.text_font.text_height(),
+                    ),
+            )
             .with_text(&theme::TEXT_DEMIBOLD, url),
         )?;
 
@@ -1684,10 +1698,10 @@ pub static mp_module_trezorui2: Module = obj_module! {
 
     /// def show_address_details(
     ///     *,
-    ///     title: str,
+    ///     qr_title: str,
     ///     address: str,
     ///     case_sensitive: bool,
-    ///     subtitle: str,
+    ///     details_title: str,
     ///     account: str | None,
     ///     path: str | None,
     ///     xpubs: list[tuple[str, str]],

@@ -1634,7 +1634,7 @@ pub static mp_module_trezorui2: Module = obj_module! {
     ///     """Show passphrase on host dialog."""
     Qstr::MP_QSTR_show_passphrase => obj_fn_0!(new_show_passphrase).as_obj(),
 
-    /// def show_mismatch() -> object:
+    /// def show_mismatch(*, title: str) -> object:
     ///     """Warning modal, receiving address mismatch."""
     Qstr::MP_QSTR_show_mismatch => obj_fn_kw!(0, new_show_mismatch).as_obj(),
 

@@ -463,17 +463,18 @@ async def show_address(
     network: str | None = None,
     multisig_index: int | None = None,
     xpubs: Sequence[str] = (),
-    mismatch: str = "ADDRESS MISMATCH?",
+    mismatch_title: str = "ADDRESS MISMATCH?",
     br_type: str = "show_address",
     br_code: ButtonRequestType = ButtonRequestType.Address,
 ) -> None:
     send_button_request = True
-    # Will be a marquee in case of multisig
-    title = (
-        "RECEIVE ADDRESS (MULTISIG)"
-        if multisig_index is not None
-        else "RECEIVE ADDRESS"
-    )
+    if title is None:
+        # Will be a marquee in case of multisig
+        title = (
+            "RECEIVE ADDRESS (MULTISIG)"
+            if multisig_index is not None
+            else "RECEIVE ADDRESS"
+        )
     while True:
         layout = RustLayout(
             trezorui2.confirm_address(
@@ -508,10 +509,10 @@ async def show_address(
             result = await ctx_wait(
                 RustLayout(
                     trezorui2.show_address_details(
-                        title="",  # unused on this model
+                        qr_title="",  # unused on this model
                         address=address if address_qr is None else address_qr,
                         case_sensitive=case_sensitive,
-                        subtitle="",  # unused on this model
+                        details_title="",  # unused on this model
                         account=account,
                         path=path,
                         xpubs=[(xpub_title(i), xpub) for i, xpub in enumerate(xpubs)],
@@ -524,7 +525,7 @@ async def show_address(
         # User pressed left cancel button, show mismatch dialogue.
         else:
             result = await ctx_wait(
-                RustLayout(trezorui2.show_mismatch(title=mismatch.upper()))
+                RustLayout(trezorui2.show_mismatch(title=mismatch_title.upper()))
             )
             assert result in (CONFIRMED, CANCELLED)
             # Right button aborts action, left goes back to showing address.
@@ -534,18 +535,21 @@ async def show_address(
 
 def show_pubkey(
     pubkey: str,
-    title: str = "Confirm public key",
+    title: str = "Public key",
     *,
     account: str | None = None,
     path: str | None = None,
-    mismatch_title: str = "Key mismatch?",
+    mismatch_title: str = "KEY MISMATCH?",
     br_type="show_pubkey",
 ) -> Awaitable[None]:
-    return confirm_blob(
-        "show_pubkey",
-        title.upper(),
-        pubkey,
+    return show_address(
+        address=pubkey,
+        title=title.upper(),
+        account=account,
+        path=path,
+        br_type=br_type,
         br_code=ButtonRequestType.PublicKey,
+        mismatch_title=mismatch_title,
     )
 
 

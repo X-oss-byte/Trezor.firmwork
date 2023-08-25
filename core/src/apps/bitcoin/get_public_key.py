@@ -86,7 +86,7 @@ async def get_public_key(
         path = address_n_to_str(address_n)
         account_name = address_n_to_name(coin, address_n, script_type)
         if account_name is None:
-            account = "Unknown path"
+            account = "Unknown account"
         elif account_name == "":
             account = coin.coin_shortcut
         else:

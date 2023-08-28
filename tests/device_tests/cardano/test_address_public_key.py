@@ -92,7 +92,7 @@ def test_cardano_get_address(client: Client, parameters, result):
 )
 def test_cardano_get_public_key(client: Client, parameters, result):
     with client:
-        IF = InputFlowShowXpubQRCode(client)
+        IF = InputFlowShowXpubQRCode(client, passphrase=bool(client.ui.passphrase))
         client.set_input_flow(IF.get())
         client.init_device(new_session=True, derive_cardano=True)
 

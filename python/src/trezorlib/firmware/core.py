@@ -23,6 +23,7 @@ import construct as c
 from construct_classes import Struct, subcon
 
 from .. import cosi
+from ..models import by_internal_name
 from ..tools import EnumAdapter, TupleAdapter
 from . import consts, util
 from .models import Model
@@ -119,7 +120,7 @@ class FirmwareImage(Struct):
 
     HASH_PARAMS = util.FirmwareHashParameters(
         hash_function=hashlib.blake2s,
-        chunk_size=consts.V2_CHUNK_SIZE,
+        chunk_size=None,
         padding_byte=None,
     )
 
@@ -129,19 +130,26 @@ class FirmwareImage(Struct):
         Assume that the first `code_offset` bytes of `code` are taken up by the header.
         """
         hashes = []
+
+        if self.HASH_PARAMS.chunk_size is None:
+            internal_name = Model.from_hw_model(self.header.hw_model).value.decode()
+            trezor_model = by_internal_name(internal_name)
+            if trezor_model is None:
+                return hashes
+            chunk_size = trezor_model.chunk_size
+        else:
+            chunk_size = self.HASH_PARAMS.chunk_size
+
         # End offset for each chunk. Normally this would be (i+1)*chunk_size for i-th chunk,
         # but the first chunk is shorter by code_offset, so all end offsets are shifted.
-        ends = [
-            (i + 1) * self.HASH_PARAMS.chunk_size - self._code_offset for i in range(16)
-        ]
+        ends = [(i + 1) * chunk_size - self._code_offset for i in range(16)]
         start = 0
         for end in ends:
             chunk = self.code[start:end]
             # padding for last non-empty chunk
             if (
                 self.HASH_PARAMS.padding_byte is not None
-                and start < len(self.code)
-                and end > len(self.code)
+                and start < len(self.code) < end
             ):
                 chunk += self.HASH_PARAMS.padding_byte[0:1] * (end - start - len(chunk))
 

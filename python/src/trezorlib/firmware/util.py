@@ -46,5 +46,5 @@ Hasher = t.Callable[[bytes], DigestCalculator]
 @dataclass
 class FirmwareHashParameters:
     hash_function: Hasher
-    chunk_size: int
+    chunk_size: t.Optional[int]
     padding_byte: t.Optional[bytes]

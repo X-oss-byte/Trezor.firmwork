@@ -32,6 +32,7 @@ class TrezorModel:
     vendors: Collection[str]
     usb_ids: Collection[UsbId]
     default_mapping: mapping.ProtobufMapping
+    chunk_size: int
 
 
 TREZOR_ONE = TrezorModel(
@@ -41,6 +42,7 @@ TREZOR_ONE = TrezorModel(
     vendors=VENDORS,
     usb_ids=((0x534C, 0x0001),),
     default_mapping=mapping.DEFAULT_MAPPING,
+    chunk_size=64 * 1024,
 )
 
 TREZOR_T = TrezorModel(
@@ -50,6 +52,7 @@ TREZOR_T = TrezorModel(
     vendors=VENDORS,
     usb_ids=((0x1209, 0x53C1), (0x1209, 0x53C0)),
     default_mapping=mapping.DEFAULT_MAPPING,
+    chunk_size=128 * 1024,
 )
 
 TREZOR_R = TrezorModel(
@@ -59,6 +62,7 @@ TREZOR_R = TrezorModel(
     vendors=VENDORS,
     usb_ids=((0x1209, 0x53C1), (0x1209, 0x53C0)),
     default_mapping=mapping.DEFAULT_MAPPING,
+    chunk_size=128 * 1024,
 )
 
 TREZOR_DISC1 = TrezorModel(
@@ -68,6 +72,7 @@ TREZOR_DISC1 = TrezorModel(
     vendors=VENDORS,
     usb_ids=((0x1209, 0x53C1), (0x1209, 0x53C0)),
     default_mapping=mapping.DEFAULT_MAPPING,
+    chunk_size=128 * 1024,
 )
 
 TREZORS = {TREZOR_ONE, TREZOR_T, TREZOR_R, TREZOR_DISC1}

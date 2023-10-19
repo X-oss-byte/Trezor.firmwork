@@ -414,6 +414,7 @@ async def show_address(
     multisig_index: int | None = None,
     xpubs: Sequence[str] = (),
     mismatch_title: str = "Address mismatch?",
+    details_title: str | None = None,
     br_type: str = "show_address",
     br_code: ButtonRequestType = ButtonRequestType.Address,
     chunkify: bool = False,
@@ -426,7 +427,7 @@ async def show_address(
             else "RECEIVE ADDRESS"
         )
         details_title = "RECEIVING TO"
-    else:
+    elif details_title is None:
         details_title = title
     while True:
         layout = RustLayout(
@@ -1150,28 +1151,58 @@ async def confirm_sign_identity(
 
 
 async def confirm_signverify(
-    coin: str, message: str, address: str, verify: bool
+    message: str,
+    address: str,
+    verify: bool,
+    path: str | None = None,
+    account: str | None = None,
+    chunkify: bool = False,
 ) -> None:
     if verify:
-        title = f"VERIFY {coin} MESSAGE"
+        address_title = "VERIFY ADDRESS"
         br_type = "verify_message"
     else:
-        title = f"SIGN {coin} MESSAGE"
+        address_title = "SIGNING ADDRESS"
         br_type = "sign_message"
 
-    await confirm_blob(
-        br_type,
-        title,
-        address,
-        "Confirm address:",
-        br_code=BR_TYPE_OTHER,
+    address_layout = RustLayout(
+        trezorui2.confirm_address(
+            title=address_title,
+            data=address,
+            description="",
+            verb="CONTINUE",
+            extra=None,
+            chunkify=chunkify,
+        )
     )
+
+    if verify or (account is None and path is None):
+        await raise_if_not_confirmed(
+            interact(
+                address_layout,
+                br_type,
+                BR_TYPE_OTHER,
+            )
+        )
+    else:
+        items = []
+        if account is not None:
+            items.append(("Account:", account))
+        if path is not None:
+            items.append(("Derivation path:", path))
+        info_layout = RustLayout(
+            trezorui2.show_info_with_cancel(
+                title="INFORMATION",
+                items=items,
+                horizontal=True,
+            )
+        )
+        await with_info(address_layout, info_layout, br_type, br_code=BR_TYPE_OTHER)
 
     await confirm_blob(
         br_type,
-        title,
+        "CONFIRM MESSAGE",
         message,
-        "Confirm message:",
         hold=not verify,
         br_code=BR_TYPE_OTHER,
     )

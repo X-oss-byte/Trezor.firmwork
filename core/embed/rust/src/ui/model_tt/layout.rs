@@ -565,6 +565,7 @@ extern "C" fn new_confirm_address(n_args: usize, args: *const Obj, kwargs: *mut 
         let title: StrBuffer = kwargs.get(Qstr::MP_QSTR_title)?.try_into()?;
         let description: Option<StrBuffer> =
             kwargs.get(Qstr::MP_QSTR_description)?.try_into_option()?;
+        let verb: StrBuffer = kwargs.get_or(Qstr::MP_QSTR_verb, "CONFIRM".into())?;
         let extra: Option<StrBuffer> = kwargs.get(Qstr::MP_QSTR_extra)?.try_into_option()?;
         let data: Obj = kwargs.get(Qstr::MP_QSTR_data)?;
         let chunkify: bool = kwargs.get_or(Qstr::MP_QSTR_chunkify, false)?;
@@ -599,7 +600,7 @@ extern "C" fn new_confirm_address(n_args: usize, args: *const Obj, kwargs: *mut 
                 title,
                 ButtonPage::new(paragraphs, theme::BG)
                     .with_swipe_left()
-                    .with_cancel_confirm(None, Some("CONFIRM")),
+                    .with_cancel_confirm(None, Some(verb)),
             )
             .with_info_button(),
         )?;
@@ -735,6 +736,7 @@ extern "C" fn new_show_info_with_cancel(n_args: usize, args: *const Obj, kwargs:
     let block = move |_args: &[Obj], kwargs: &Map| {
         let title: StrBuffer = kwargs.get(Qstr::MP_QSTR_title)?.try_into()?;
         let items: Obj = kwargs.get(Qstr::MP_QSTR_items)?;
+        let horizontal: bool = kwargs.get_or(Qstr::MP_QSTR_horizontal, false)?;
 
         let mut paragraphs = ParagraphVecShort::new();
 
@@ -746,11 +748,16 @@ extern "C" fn new_show_info_with_cancel(n_args: usize, args: *const Obj, kwargs:
             paragraphs.add(Paragraph::new(&theme::TEXT_MONO, value));
         }
 
+        let axis = match horizontal {
+            true => geometry::Axis::Horizontal,
+            _ => geometry::Axis::Vertical,
+        };
+
         let obj = LayoutObj::new(
             Frame::left_aligned(
                 theme::label_title(),
                 title,
-                SimplePage::vertical(paragraphs.into_paragraphs(), theme::BG)
+                SimplePage::new(paragraphs.into_paragraphs(), axis, theme::BG)
                     .with_swipe_right_to_go_back(),
             )
             .with_cancel_button(),
@@ -1651,6 +1658,7 @@ pub static mp_module_trezorui2: Module = obj_module! {
     ///     title: str,
     ///     data: str | bytes,
     ///     description: str | None,
+    ///     verb: str | None = "CONFIRM",
     ///     extra: str | None,
     ///     chunkify: bool = False,
     /// ) -> object:
@@ -1693,8 +1701,9 @@ pub static mp_module_trezorui2: Module = obj_module! {
     ///     *,
     ///     title: str,
     ///     items: Iterable[Tuple[str, str]],
+    ///     horizontal: bool = False,
     /// ) -> object:
-    ///     """Show metadata when for outgoing transaction."""
+    ///     """Show metadata for outgoing transaction."""
     Qstr::MP_QSTR_show_info_with_cancel => obj_fn_kw!(0, new_show_info_with_cancel).as_obj(),
 
     /// def confirm_value(

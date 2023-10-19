@@ -27,6 +27,7 @@ const NOTIFICATION_HEIGHT: i16 = 12;
 const LABEL_OUTSET: i16 = 3;
 const NOTIFICATION_FONT: Font = Font::NORMAL;
 const NOTIFICATION_ICON: Icon = theme::ICON_WARNING;
+const COINJOIN_CORNER: Point = AREA.top_right().ofs(Offset::new(-2, 2));
 
 fn paint_default_image() {
     theme::ICON_LOGO.draw(
@@ -171,13 +172,15 @@ where
     instruction: Child<Label<T>>,
     /// Used for unlocking the device from lockscreen
     invisible_buttons: Child<ButtonController<T>>,
+    /// Display coinjoin icon?
+    coinjoin_icon: Option<Icon>,
 }
 
 impl<T> Lockscreen<T>
 where
     T: StringType + Clone,
 {
-    pub fn new(label: T, bootscreen: bool) -> Self {
+    pub fn new(label: T, bootscreen: bool, coinjoin_authorized: bool) -> Self {
         let invisible_btn_layout = ButtonLayout::text_none_text("".into(), "".into());
         let instruction_str = if bootscreen {
             "Click to Connect"
@@ -188,6 +191,7 @@ where
             label: Child::new(Label::centered(label, theme::TEXT_BIG)),
             instruction: Child::new(Label::centered(instruction_str.into(), theme::TEXT_NORMAL)),
             invisible_buttons: Child::new(ButtonController::new(invisible_btn_layout)),
+            coinjoin_icon: coinjoin_authorized.then_some(theme::ICON_COINJOIN),
         }
     }
 }
@@ -221,6 +225,14 @@ where
         );
         self.instruction.paint();
         self.label.paint();
+        self.coinjoin_icon.map(|i| {
+            i.draw(
+                COINJOIN_CORNER,
+                Alignment2D::TOP_RIGHT,
+                theme::FG,
+                theme::BG,
+            )
+        });
     }
 }
 

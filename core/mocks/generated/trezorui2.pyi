@@ -431,6 +431,7 @@ def show_lockscreen(
     label: str | None,
     bootscreen: bool,
     skip_first_paint: bool,
+    coinjoin_authorized: bool = False,
 ) -> CANCELLED:
     """Homescreen for locked device."""
 

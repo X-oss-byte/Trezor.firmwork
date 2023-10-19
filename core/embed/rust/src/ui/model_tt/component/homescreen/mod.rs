@@ -199,7 +199,7 @@ where
             let text = HomescreenText {
                 text: self.label.as_ref(),
                 style: label_style,
-                offset: Offset::new(10, LABEL_Y),
+                offset: Offset::y(LABEL_Y),
                 icon: None,
             };
 
@@ -311,25 +311,25 @@ where
             HomescreenText {
                 text: "",
                 style: theme::TEXT_NORMAL,
-                offset: Offset::new(12, COINJOIN_Y),
+                offset: Offset::new(2, COINJOIN_Y),
                 icon: Some(theme::ICON_COINJOIN),
             },
             HomescreenText {
                 text: locked,
                 style: theme::TEXT_BOLD,
-                offset: Offset::new(10, LOCKED_Y),
+                offset: Offset::y(LOCKED_Y),
                 icon: Some(theme::ICON_LOCK),
             },
             HomescreenText {
                 text: tap,
                 style: theme::TEXT_NORMAL,
-                offset: Offset::new(10, TAP_Y),
+                offset: Offset::y(TAP_Y),
                 icon: None,
             },
             HomescreenText {
                 text: self.label.as_ref(),
                 style: label_style,
-                offset: Offset::new(10, LABEL_Y),
+                offset: Offset::y(LABEL_Y),
                 icon: None,
             },
         ];
